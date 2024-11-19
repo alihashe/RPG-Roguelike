@@ -15,6 +15,6 @@ MonoBehaviour:
   health: 100
   mana: 100
   attack: 20
-  defense: 20
+  defense: 10
   mAttack: 20
   mDefense: 20
