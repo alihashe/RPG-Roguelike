@@ -1,3 +1,4 @@
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -5,14 +6,15 @@ public class PlayerMovement : MonoBehaviour
 {
     Rigidbody2D rb; // Reference to player rigidbody
     Transform attackCircle; // Empty gameobject used to create hitbox
-    LayerMask enemyLayer;
-    [SerializeField] float attackRange = 0.5f; // Attack hitbox size
+    LayerMask enemyLayer; // Used to only look for enemies with the hitbox
+    SpriteRenderer playerSprite; // Reference for the player sprite
+    float attackRange = 0.5f; // Attack hitbox size
+    float baseMoveSpeed = 5.0f; // Base move speed; Should never change while in game
     [SerializeField] float moveSpeed = 5.0f; // Dynamic movespeed
-    [SerializeField] float baseMoveSpeed = 5.0f; // Base move speed; Should never change while in game
-    PlayerInputActions playerAction;
-    StatHolder playerStats;
+    PlayerInputActions playerAction; // Reference the system inputs that were converted to script
+    StatHolder playerStats; // Create an instance of the attributes attached to the player
 
-    Vector2 moveDirection = Vector2.zero;
+    Vector2 moveDirection = Vector2.zero; // Start movement at 0
     InputAction move;
     InputAction attack;
     InputAction interact;
@@ -23,6 +25,7 @@ public class PlayerMovement : MonoBehaviour
         playerAction = new PlayerInputActions();
         playerStats = GetComponent<StatHolder>();
         rb = GetComponent<Rigidbody2D>();
+        playerSprite = GetComponent<SpriteRenderer>();
         attackCircle = this.gameObject.transform.GetChild(0).GetComponent<Transform>();
         enemyLayer = LayerMask.GetMask("Enemies");
     }
@@ -69,17 +72,58 @@ public class PlayerMovement : MonoBehaviour
         if (!playerAction.Player.Sprint.IsPressed())
             moveSpeed = baseMoveSpeed;
 
-        // HEEEEEEEEY This is fine for testing but will need fixing once the player sprite is introduced
-        #region Player Rotation
-        if (Input.GetKey(KeyCode.RightArrow))
-            rb.MoveRotation(0f);
-        if (Input.GetKey(KeyCode.LeftArrow))
-            rb.MoveRotation(180f);
-        if (Input.GetKey(KeyCode.UpArrow))
-            rb.MoveRotation(90f);
-        if (Input.GetKey(KeyCode.DownArrow))
-            rb.MoveRotation(-90f);
+        // Player Rotation based on movement
+        #region Four Direction Movement
+        if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
+        {
+            playerSprite.flipX = false;
+            attackCircle.transform.localPosition = new Vector2(0.5f, 0);
+        }
+        if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
+        {
+            playerSprite.flipX = true;
+            attackCircle.transform.localPosition = new Vector2(-0.5f, 0);
+        }
+        if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))
+        {
+            playerSprite.flipY = false;
+            attackCircle.transform.localPosition = new Vector2(0, 0.5f);
+        }
+        if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))
+        {
+            playerSprite.flipY = true;
+            attackCircle.transform.localPosition = new Vector2(0, -0.5f);
+        }
         #endregion
+        #region Diagonal Movement
+        if ((Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) && ((Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))))
+        {
+            playerSprite.flipX = false;
+            playerSprite.flipY = false;
+            rb.MoveRotation(-45f);
+        }
+        else if ((Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) && ((Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))))
+        {
+            playerSprite.flipX = false;
+            playerSprite.flipY = true;
+            rb.MoveRotation(45f);
+        }
+        else if ((Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) && ((Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))))
+        {
+            playerSprite.flipX = true;
+            playerSprite.flipY = true;
+            rb.MoveRotation(-45f);
+        }
+        else if ((Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) && ((Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))))
+        {
+            playerSprite.flipX = true;
+            playerSprite.flipY = false;
+            rb.MoveRotation(45f);
+        }
+        else
+            transform.rotation = quaternion.identity;
+        #endregion
+
     }
 
     // Draw hit box for testing

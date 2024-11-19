@@ -48,8 +48,11 @@ public class StatHolder : MonoBehaviour
     {
         Debug.Log(this.gameObject.name + " has died!");
         // Play a death animation
+
         // Disable collider
-        // 
+        GetComponent<CircleCollider2D>().enabled = false;
+        // Disable gameObject
+        this.enabled = false;
     }
 
 }
