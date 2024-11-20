@@ -15,7 +15,7 @@ public class PlayerMovement : MonoBehaviour
     StatHolder playerStats; // Create an instance of the attributes attached to the player
 
     Vector2 moveDirection = Vector2.zero; // Start movement at 0
-    InputAction move;
+    InputAction move; // Instances of actions from the Input Manager
     InputAction attack;
     InputAction interact;
     InputAction sprint;
