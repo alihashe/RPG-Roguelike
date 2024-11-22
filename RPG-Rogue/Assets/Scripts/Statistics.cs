@@ -5,6 +5,7 @@ public class Statistics : ScriptableObject
 {
     public int health;
     public int mana;
+    public int stamina;
     public int attack;
     public int defense;
     public int mAttack;

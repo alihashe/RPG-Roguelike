@@ -10,6 +10,8 @@ public class PlayerMovement : MonoBehaviour
     SpriteRenderer playerSprite; // Reference for the player sprite
     float attackRange = 0.5f; // Attack hitbox size
     float baseMoveSpeed = 5.0f; // Base move speed; Should never change while in game
+    float staminaDrainSpeed = 0.25f; // The number of seconds that pass before the DrainStamina function is repeated
+    int originalStamina; // The amount of stamina that the player starts out with
     [SerializeField] float moveSpeed = 5.0f; // Dynamic movespeed
     PlayerInputActions playerAction; // Reference the system inputs that were converted to script
     StatHolder playerStats; // Create an instance of the attributes attached to the player
@@ -20,14 +22,20 @@ public class PlayerMovement : MonoBehaviour
     InputAction interact;
     InputAction sprint;
 
-    private void Awake()
+    void Awake()
     {
         playerAction = new PlayerInputActions();
         playerStats = GetComponent<StatHolder>();
-        rb = GetComponent<Rigidbody2D>();
         playerSprite = GetComponent<SpriteRenderer>();
+        rb = GetComponent<Rigidbody2D>();
         attackCircle = this.gameObject.transform.GetChild(0).GetComponent<Transform>();
         enemyLayer = LayerMask.GetMask("Enemies");
+        originalStamina = playerStats.stats.stamina;
+    }
+
+    void Start()
+    {
+        
     }
 
     private void OnEnable()
@@ -71,6 +79,12 @@ public class PlayerMovement : MonoBehaviour
         // Clamps speed back to the original when not sprinting
         if (!playerAction.Player.Sprint.IsPressed())
             moveSpeed = baseMoveSpeed;
+        
+        // Clamp stamina
+        if (playerStats.stats.stamina < 0)
+            playerStats.stats.stamina = 0;
+        else if (playerStats.stats.stamina > originalStamina)
+            playerStats.stats.stamina = originalStamina;
 
         // Player Rotation based on movement
         #region Four Direction Movement
@@ -149,8 +163,12 @@ public class PlayerMovement : MonoBehaviour
 
     void Sprinted(InputAction.CallbackContext context)
     {
-        Debug.Log("SPRINT!");
-        moveSpeed = moveSpeed + 2.5f;
+        if (playerStats.stats.stamina > 0)
+        {
+            Debug.Log("SPRINT!");
+            moveSpeed = moveSpeed + 2.5f;
+            
+        }
     }
 
     void Interacted(InputAction.CallbackContext context)

@@ -6,6 +6,7 @@ public class StatHolder : MonoBehaviour
     
     int health;
     int mana;
+    int stamina;
     int attack;
     int defense;
     int mAttack;
@@ -15,6 +16,7 @@ public class StatHolder : MonoBehaviour
     {
         health = stats.health;
         mana = stats.mana;
+        stamina = stats.stamina;
         attack = stats.attack;
         defense = stats.defense;
         mAttack = stats.mAttack;
@@ -42,6 +44,11 @@ public class StatHolder : MonoBehaviour
                 Death();
             }
         }
+    }
+
+    public void DrainStamina()
+    {
+        stamina -= 1;
     }
 
     public void Death()

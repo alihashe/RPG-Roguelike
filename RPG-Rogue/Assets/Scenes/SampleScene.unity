@@ -1002,7 +1002,7 @@ MonoBehaviour:
   heuristic: 2
   heuristicScale: 1
   threadCount: 1
-  maxFrameTime: 1
+  maxFrameTime: 10
   batchGraphUpdates: 0
   graphUpdateBatchingInterval: 0.2
   euclideanEmbedding:
@@ -1032,7 +1032,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1085214872
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1194,6 +1194,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 5
   nextWaypointDistance: 3
+  reachedEndOfPath: 0
 --- !u!50 &1085214878
 Rigidbody2D:
   serializedVersion: 5
@@ -1233,17 +1234,17 @@ GameObject:
   - component: {fileID: 1557996493}
   - component: {fileID: 1557996496}
   - component: {fileID: 1557996495}
+  - component: {fileID: 1557996500}
   - component: {fileID: 1557996498}
   - component: {fileID: 1557996497}
   - component: {fileID: 1557996499}
-  - component: {fileID: 1557996500}
   m_Layer: 7
   m_Name: Enemy
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!212 &1557996493
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1308,7 +1309,7 @@ Transform:
   m_GameObject: {fileID: 1557996492}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -2, z: 0}
+  m_LocalPosition: {x: 0, y: -4.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1379,7 +1380,7 @@ MonoBehaviour:
   radius: 0.5
   height: 2
   canMove: 1
-  maxSpeed: 3
+  maxSpeed: 5
   gravity: {x: 0, y: 0, z: 0}
   groundMask:
     serializedVersion: 2
@@ -1398,9 +1399,9 @@ MonoBehaviour:
   targetCompatibility: {fileID: 0}
   maxAcceleration: -2.5
   rotationSpeed: 360
-  slowdownDistance: 0.8
+  slowdownDistance: 3
   pickNextWaypointDist: 1
-  endReachedDistance: 0.2
+  endReachedDistance: 1.75
   alwaysDrawGizmos: 0
   slowWhenNotFacingTarget: 1
   whenCloseToDestination: 0
@@ -1456,7 +1457,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1557996492}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3443aefc358939547a86b917540dcfcb, type: 3}
+  m_Script: {fileID: 11500000, guid: 8fa970eed196814489ca00b3a60e9783, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   aiPath: {fileID: 1557996497}
