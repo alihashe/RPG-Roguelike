@@ -8,16 +8,23 @@ public class PlayerMovement : MonoBehaviour
     Transform attackCircle; // Empty gameobject used to create hitbox
     LayerMask enemyLayer; // Used to only look for enemies with the hitbox
     SpriteRenderer playerSprite; // Reference for the player sprite
-    float attackRange = 0.5f; // Attack hitbox size
-    float baseMoveSpeed = 5.0f; // Base move speed; Should never change while in game
-    float staminaDrainSpeed = 0.25f; // The number of seconds that pass before the DrainStamina function is repeated
-    int originalStamina; // The amount of stamina that the player starts out with
-    [SerializeField] float moveSpeed = 5.0f; // Dynamic movespeed
     PlayerInputActions playerAction; // Reference the system inputs that were converted to script
     StatHolder playerStats; // Create an instance of the attributes attached to the player
+    CharacterState currentState; // Current state of the player
+
+    float attackRange = 0.6f; // Attack hitbox size
+    [SerializeField] float moveSpeed = 5.0f; // Dynamic movespeed
+    float baseMoveSpeed = 5.0f; // Base move speed; Should never change while in game
+    float sprintSpeed = 7.0f; // The speed when sprinting
+    //float staminaDrainSpeed = 0.25f; // The number of seconds that pass before the DrainStamina function is repeated
+    int originalStamina; // The amount of stamina that the player starts out with
+    bool IsMoving { get; set; } // Is the player moving
+    bool IsSprinting { get; set; } // Is the player sprinting
+    bool IsAttacking { get; set; } // Is the player attacking
 
     Vector2 moveDirection = Vector2.zero; // Start movement at 0
-    InputAction move; // Instances of actions from the Input Manager
+    // Instances of actions from the Input Manager
+    InputAction move;
     InputAction attack;
     InputAction interact;
     InputAction sprint;
@@ -28,14 +35,14 @@ public class PlayerMovement : MonoBehaviour
         playerStats = GetComponent<StatHolder>();
         playerSprite = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
-        attackCircle = this.gameObject.transform.GetChild(0).GetComponent<Transform>();
-        enemyLayer = LayerMask.GetMask("Enemies");
-        originalStamina = playerStats.stats.stamina;
+        attackCircle = this.gameObject.transform.GetChild(0).GetComponent<Transform>(); // MAKE SURE THE ATTACK HITBOX GAMEOBJECT IS THE FIRST CHILD OF THE PLAYER
+        enemyLayer = LayerMask.GetMask("Enemies"); // Used to differentiate targets within the player hitbox
     }
 
     void Start()
     {
-        
+        currentState = CharacterState.Idle; // Start player in Idle
+        originalStamina = playerStats.stats.stamina; // Set the player stamina to the original amount when intialized
     }
 
     private void OnEnable()
@@ -79,7 +86,7 @@ public class PlayerMovement : MonoBehaviour
         // Clamps speed back to the original when not sprinting
         if (!playerAction.Player.Sprint.IsPressed())
             moveSpeed = baseMoveSpeed;
-        
+
         // Clamp stamina
         if (playerStats.stats.stamina < 0)
             playerStats.stats.stamina = 0;
@@ -138,7 +145,106 @@ public class PlayerMovement : MonoBehaviour
             transform.rotation = quaternion.identity;
         #endregion
 
+        // Handle switching between states
+        switch (currentState)
+        {
+            case CharacterState.Idle:
+                HandleIdleState();
+                break;
+            case CharacterState.Moving:
+                HandleMovingState();
+                break;
+            case CharacterState.Sprinting:
+                HandleSprintingState();
+                break;
+            case CharacterState.Attacking:
+                HandleAttackingState();
+                break;
+        }
+
     }
+
+    #region State Functions
+    void HandleIdleState()
+    {
+        Debug.Log("Is Idle State");
+        // Stop any movement and play idle animation
+        rb.linearVelocity = Vector2.zero;
+        // SetAnimation("Idle");
+        // Transition to moving state if there is movement input
+        if (IsMoving)
+        {
+            currentState = CharacterState.Moving; // Switch to moving state
+        } else if (IsSprinting)
+        {
+            currentState = CharacterState.Sprinting; // Switch to sprinting state
+        } else if (IsAttacking)
+        {
+            currentState = CharacterState.Attacking; // Switch to attacking state
+        }
+    }
+
+    void HandleMovingState()
+    {
+        Debug.Log("Is Moving State");
+        IsMoving = true;
+        moveSpeed = baseMoveSpeed;
+        if (Mathf.Abs(moveSpeed) < 0.1f)
+        {
+            IsMoving = false;
+            currentState = CharacterState.Idle; // Switch to idle state
+        } else if (IsSprinting) { 
+            IsMoving = false;
+            currentState = CharacterState.Sprinting; // Switch to sprinting state
+        } else if (IsAttacking)
+        {
+            IsMoving = false;
+            currentState = CharacterState.Attacking; // Switch to attack state
+        }
+    }
+
+    void HandleSprintingState()
+    {
+        Debug.Log("Is Sprinting State");
+        IsSprinting = true;
+        moveSpeed = sprintSpeed;
+        if (Mathf.Abs(moveSpeed) < 0.1f)
+        {
+            IsSprinting = false;
+            currentState = CharacterState.Idle; // Switch to idle state
+        }
+        else if (IsMoving)
+        {
+            IsSprinting = false;
+            currentState = CharacterState.Moving; // Switch to moving state
+        }
+        else if (IsAttacking)
+        {
+            IsSprinting = false;
+            currentState = CharacterState.Attacking; // Switch to attacking state
+        }
+    }
+
+    void HandleAttackingState()
+    {
+        Debug.Log("Is Attacking State");
+        // Set attacking animation
+        //      SetAnimation("Attack");
+        //      After the attack finishes, transition back to idle
+        if (!IsAttacking)
+        {
+            currentState = CharacterState.Idle;  // Switch to idle state
+        }
+    }
+
+    // Set animation based on the state   KEEP FOR LATER
+    /*private void SetAnimation(string animationName)
+    {
+        // Example of setting animation using an Animator component
+        Animator animator = GetComponent<Animator>();
+        animator.Play(animationName);
+    }*/
+    #endregion
 
     // Draw hit box for testing
     void OnDrawGizmosSelected()
@@ -150,8 +256,6 @@ public class PlayerMovement : MonoBehaviour
     #region Input Action Functions
     void Attacked(InputAction.CallbackContext context)
     {
-        Debug.Log("ATTACK!");
-
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackCircle.position, attackRange, enemyLayer);
 
         foreach(Collider2D enemy in hitEnemies)
@@ -165,9 +269,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (playerStats.stats.stamina > 0)
         {
-            Debug.Log("SPRINT!");
-            moveSpeed = moveSpeed + 2.5f;
-            
+            IsSprinting = true;
         }
     }
 
