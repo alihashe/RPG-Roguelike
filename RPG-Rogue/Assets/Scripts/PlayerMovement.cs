@@ -12,7 +12,7 @@ public class PlayerMovement : MonoBehaviour
     StatHolder playerStats; // Create an instance of the attributes attached to the player
     CharacterState currentState; // Current state of the player
 
-    float attackRange = 0.6f; // Attack hitbox size
+    float attackRange = 0.5f; // Attack hitbox size
     [SerializeField] float moveSpeed = 5.0f; // Dynamic movespeed
     float baseMoveSpeed = 5.0f; // Base move speed; Should never change while in game
     float sprintSpeed = 7.0f; // The speed when sprinting
@@ -84,8 +84,8 @@ public class PlayerMovement : MonoBehaviour
         moveDirection = move.ReadValue<Vector2>();
 
         // Clamps speed back to the original when not sprinting
-        if (!playerAction.Player.Sprint.IsPressed())
-            moveSpeed = baseMoveSpeed;
+        //if (!playerAction.Player.Sprint.IsPressed())
+        //    moveSpeed = baseMoveSpeed;
 
         // Clamp stamina
         if (playerStats.stats.stamina < 0)
@@ -167,15 +167,15 @@ public class PlayerMovement : MonoBehaviour
     #region State Functions
     void HandleIdleState()
     {
-        Debug.Log("Is Idle State");
         // Stop any movement and play idle animation
         rb.linearVelocity = Vector2.zero;
         // SetAnimation("Idle");
+        moveSpeed = baseMoveSpeed;
         // Transition to moving state if there is movement input
-        if (IsMoving)
+        if ((Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f) && !playerAction.Player.Sprint.IsPressed())
         {
             currentState = CharacterState.Moving; // Switch to moving state
-        } else if (IsSprinting)
+        } else if (playerAction.Player.Sprint.IsPressed())
         {
             currentState = CharacterState.Sprinting; // Switch to sprinting state
         } else if (IsAttacking)
@@ -186,14 +186,13 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleMovingState()
     {
-        Debug.Log("Is Moving State");
         IsMoving = true;
         moveSpeed = baseMoveSpeed;
-        if (Mathf.Abs(moveSpeed) < 0.1f)
+        if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f && !IsSprinting)
         {
             IsMoving = false;
             currentState = CharacterState.Idle; // Switch to idle state
-        } else if (IsSprinting) { 
+        } else if (playerAction.Player.Sprint.IsPressed()) { 
             IsMoving = false;
             currentState = CharacterState.Sprinting; // Switch to sprinting state
         } else if (IsAttacking)
@@ -205,15 +204,14 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleSprintingState()
     {
-        Debug.Log("Is Sprinting State");
         IsSprinting = true;
         moveSpeed = sprintSpeed;
-        if (Mathf.Abs(moveSpeed) < 0.1f)
+        if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f)
         {
             IsSprinting = false;
             currentState = CharacterState.Idle; // Switch to idle state
         }
-        else if (IsMoving)
+        else if (!playerAction.Player.Sprint.IsPressed())
         {
             IsSprinting = false;
             currentState = CharacterState.Moving; // Switch to moving state
