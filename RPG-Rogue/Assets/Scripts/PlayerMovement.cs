@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -13,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     CharacterState currentState; // Current state of the player
 
     float attackRange = 0.5f; // Attack hitbox size
+    float iFrameDuration = 0.5f; // Seconds of Iframes per dodge roll
     [SerializeField] float moveSpeed = 5.0f; // Dynamic movespeed
     float baseMoveSpeed = 5.0f; // Base move speed; Should never change while in game
     float sprintSpeed = 7.0f; // The speed when sprinting
@@ -21,11 +23,13 @@ public class PlayerMovement : MonoBehaviour
     bool IsMoving { get; set; } // Is the player moving
     bool IsSprinting { get; set; } // Is the player sprinting
     bool IsAttacking { get; set; } // Is the player attacking
+    bool IsDodging { get; set; } // Is the player dodging
 
     Vector2 moveDirection = Vector2.zero; // Start movement at 0
     // Instances of actions from the Input Manager
     InputAction move;
     InputAction attack;
+    InputAction dodge;
     InputAction interact;
     InputAction sprint;
 
@@ -43,6 +47,7 @@ public class PlayerMovement : MonoBehaviour
     {
         currentState = CharacterState.Idle; // Start player in Idle
         originalStamina = playerStats.stats.stamina; // Set the player stamina to the original amount when intialized
+        iFrameDuration *= Time.deltaTime;
     }
 
     private void OnEnable()
@@ -50,6 +55,7 @@ public class PlayerMovement : MonoBehaviour
         // Sets references to action in the input manager
         move = playerAction.Player.Move;
         attack = playerAction.Player.Attack;
+        dodge = playerAction.Player.Dodge;
         interact = playerAction.Player.Interact;
         sprint = playerAction.Player.Sprint;
 
@@ -57,6 +63,8 @@ public class PlayerMovement : MonoBehaviour
         move.Enable();
         attack.Enable();
         attack.performed += Attacked;
+        dodge.Enable();
+        dodge.performed += Dodged;
         interact.Enable();
         interact.performed += Interacted;
         sprint.Enable();
@@ -68,6 +76,7 @@ public class PlayerMovement : MonoBehaviour
         // Good practice: Cleans up code by unsubcribing when object is no longer needed
         move.Disable();
         attack.Disable();
+        dodge.Disable();
         interact.Disable();
         sprint.Disable();
     }
@@ -82,10 +91,6 @@ public class PlayerMovement : MonoBehaviour
     {
         // Used to calculate the movement and position of the player
         moveDirection = move.ReadValue<Vector2>();
-
-        // Clamps speed back to the original when not sprinting
-        //if (!playerAction.Player.Sprint.IsPressed())
-        //    moveSpeed = baseMoveSpeed;
 
         // Clamp stamina
         if (playerStats.stats.stamina < 0)
@@ -160,6 +165,9 @@ public class PlayerMovement : MonoBehaviour
             case CharacterState.Attacking:
                 HandleAttackingState();
                 break;
+            case CharacterState.Dodging:
+                HandleDodgingState();
+                break;
         }
 
     }
@@ -167,20 +175,24 @@ public class PlayerMovement : MonoBehaviour
     #region State Functions
     void HandleIdleState()
     {
-        // Stop any movement and play idle animation
-        rb.linearVelocity = Vector2.zero;
-        // SetAnimation("Idle");
+        // SetAnimation("Idle"); // Play idle animation
         moveSpeed = baseMoveSpeed;
-        // Transition to moving state if there is movement input
-        if ((Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f) && !playerAction.Player.Sprint.IsPressed())
+        IsSprinting = false; // Hack solution to pressing sprint without moving bug
+        if (Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f && !playerAction.Player.Sprint.IsPressed()) // If there is movement input and sprint is not pressed...
         {
             currentState = CharacterState.Moving; // Switch to moving state
-        } else if (playerAction.Player.Sprint.IsPressed())
+        }
+        else if (Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f && playerAction.Player.Sprint.IsPressed()) // If there is movement input but sprint is pressed...
         {
             currentState = CharacterState.Sprinting; // Switch to sprinting state
-        } else if (IsAttacking)
+        }
+        else if (IsAttacking)
         {
             currentState = CharacterState.Attacking; // Switch to attacking state
+        }
+        else if (playerAction.Player.Dodge.IsPressed())
+        {
+            currentState = CharacterState.Dodging;
         }
     }
 
@@ -191,14 +203,21 @@ public class PlayerMovement : MonoBehaviour
         if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f && !IsSprinting)
         {
             IsMoving = false;
+            rb.linearVelocity = Vector2.zero;
             currentState = CharacterState.Idle; // Switch to idle state
-        } else if (playerAction.Player.Sprint.IsPressed()) { 
+        }
+        else if (playerAction.Player.Sprint.IsPressed()) { 
             IsMoving = false;
             currentState = CharacterState.Sprinting; // Switch to sprinting state
-        } else if (IsAttacking)
+        }
+        else if (IsAttacking)
         {
             IsMoving = false;
             currentState = CharacterState.Attacking; // Switch to attack state
+        }
+        else if (playerAction.Player.Dodge.IsPressed())
+        {
+            currentState = CharacterState.Dodging;
         }
     }
 
@@ -209,6 +228,7 @@ public class PlayerMovement : MonoBehaviour
         if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f)
         {
             IsSprinting = false;
+            rb.linearVelocity = Vector2.zero;
             currentState = CharacterState.Idle; // Switch to idle state
         }
         else if (!playerAction.Player.Sprint.IsPressed())
@@ -221,6 +241,17 @@ public class PlayerMovement : MonoBehaviour
             IsSprinting = false;
             currentState = CharacterState.Attacking; // Switch to attacking state
         }
+        else if (playerAction.Player.Dodge.IsPressed())
+        {
+            currentState = CharacterState.Dodging;
+        }
+    }
+
+    void HandleDodgingState()
+    {
+        IsDodging = true;
+
+
     }
 
     void HandleAttackingState()
@@ -251,6 +282,15 @@ public class PlayerMovement : MonoBehaviour
             Gizmos.DrawWireSphere(attackCircle.position, attackRange);
     }
 
+    IEnumerator DodgeIFrames(float dodgeTiming)
+    {
+        Debug.Log("Player is invincible... yay");
+        yield return new WaitForSeconds(dodgeTiming);
+        Debug.Log("Player is NOT invincible... booooooo");
+    }
+
+
+
     #region Input Action Functions
     void Attacked(InputAction.CallbackContext context)
     {
@@ -261,6 +301,11 @@ public class PlayerMovement : MonoBehaviour
             Debug.Log("Hit: " + enemy.name);
             enemy.GetComponent<StatHolder>().TakeDamage(playerStats.stats.attack);
         }
+    }
+
+    void Dodged(InputAction.CallbackContext context)
+    {
+
     }
 
     void Sprinted(InputAction.CallbackContext context)
