@@ -18,7 +18,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float moveSpeed = 5.0f; // Dynamic movespeed
     float baseMoveSpeed = 5.0f; // Base move speed; Should never change while in game
     float sprintSpeed = 7.0f; // The speed when sprinting
-    //float staminaDrainSpeed = 0.25f; // The number of seconds that pass before the DrainStamina function is repeated
+    float staminaDrainSpeed = 5f; // The number of seconds that pass before the DrainStamina function is repeated
     int originalStamina; // The amount of stamina that the player starts out with
     bool IsMoving { get; set; } // Is the player moving
     bool IsSprinting { get; set; } // Is the player sprinting
@@ -177,7 +177,7 @@ public class PlayerMovement : MonoBehaviour
     {
         // SetAnimation("Idle"); // Play idle animation
         moveSpeed = baseMoveSpeed;
-        IsSprinting = false; // Hack solution to pressing sprint without moving bug
+        IsSprinting = false; // Solution to pressing sprint without moving bug - Always false when Idle
         if (Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f && !playerAction.Player.Sprint.IsPressed()) // If there is movement input and sprint is not pressed...
         {
             currentState = CharacterState.Moving; // Switch to moving state
@@ -192,7 +192,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (playerAction.Player.Dodge.IsPressed())
         {
-            currentState = CharacterState.Dodging;
+            currentState = CharacterState.Dodging; // Switch to dodging state
         }
     }
 
@@ -217,7 +217,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (playerAction.Player.Dodge.IsPressed())
         {
-            currentState = CharacterState.Dodging;
+            currentState = CharacterState.Dodging; // Switch to dodging state
         }
     }
 
@@ -225,6 +225,7 @@ public class PlayerMovement : MonoBehaviour
     {
         IsSprinting = true;
         moveSpeed = sprintSpeed;
+        //playerStats.DrainStamina(staminaDrainSpeed);
         if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f)
         {
             IsSprinting = false;
@@ -243,14 +244,15 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (playerAction.Player.Dodge.IsPressed())
         {
-            currentState = CharacterState.Dodging;
+            IsSprinting = false;
+            currentState = CharacterState.Dodging; // Switch to dodging state
         }
     }
 
     void HandleDodgingState()
     {
         IsDodging = true;
-
+        StartCoroutine(DodgeIFrames(iFrameDuration));
 
     }
 
@@ -305,7 +307,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Dodged(InputAction.CallbackContext context)
     {
-
+        IsDodging = true;
     }
 
     void Sprinted(InputAction.CallbackContext context)

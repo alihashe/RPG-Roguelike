@@ -46,9 +46,9 @@ public class StatHolder : MonoBehaviour
         }
     }
 
-    public void DrainStamina()
+    public void DrainStamina(float drainAmount)
     {
-        stamina -= 1;
+        stamina -= (int)(drainAmount * Time.deltaTime);
     }
 
     public void Death()
