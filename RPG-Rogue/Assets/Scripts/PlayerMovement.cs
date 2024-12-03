@@ -191,11 +191,6 @@ public class PlayerMovement : MonoBehaviour
         {
             currentState = CharacterState.Attacking; // Switch to attacking state
         }
-        else if (playerAction.Player.Dodge.IsPressed())
-        {
-            playerStats.DodgeStamina(dodgeStaminaCost); // Can't put in handle function or else it will be called repeatedly
-            currentState = CharacterState.Dodging; // Switch to dodging state
-        }
     }
 
     void HandleMovingState()
@@ -327,7 +322,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Dodged(InputAction.CallbackContext context)
     {
-        if (playerStats.stats.stamina > dodgeStaminaCost)
+        if (playerStats.stats.stamina > dodgeStaminaCost && currentState != CharacterState.Idle)
             IsDodging = true;
     }
 
