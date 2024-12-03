@@ -28,6 +28,7 @@ public class PlayerMovement : MonoBehaviour
     bool IsSprinting { get; set; } // Is the player sprinting
     bool IsAttacking { get; set; } // Is the player attacking
     bool IsDodging { get; set; } // Is the player dodging
+    bool IsTired { get; set; } // Did the player run out of stamina
 
     Vector2 moveDirection = Vector2.zero; // Start movement at 0
     // Instances of actions from the Input Manager
@@ -56,7 +57,7 @@ public class PlayerMovement : MonoBehaviour
         moveSpeed = playerStats.stats.speed;
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
         // Sets references to action in the input manager
         move = playerAction.Player.Move;
@@ -77,7 +78,7 @@ public class PlayerMovement : MonoBehaviour
         sprint.performed += Sprinted;
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         // Good practice: Cleans up code by unsubcribing when object is no longer needed
         move.Disable();
@@ -87,7 +88,7 @@ public class PlayerMovement : MonoBehaviour
         sprint.Disable();
     }
 
-    private void FixedUpdate()
+    void FixedUpdate()
     {
         // Moves the rigidbody by multiplying the directional input by the speed variable
         rb.linearVelocity = new Vector2(moveDirection.x * moveSpeed, moveDirection.y * moveSpeed);
@@ -166,7 +167,10 @@ public class PlayerMovement : MonoBehaviour
                 HandleAttackingState();
                 break;
             case CharacterState.Dodging:
-                HandleDodgingState();
+                StartCoroutine(HandleDodgingState(iFrameDuration));
+                break;
+            case CharacterState.Tired:
+                HandleTiredState();
                 break;
         }
 
@@ -250,13 +254,9 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    void HandleDodgingState()
+    IEnumerator HandleDodgingState(float dodgeTiming)
     {
         IsDodging = true;
-        StartCoroutine(DodgeIFrames(iFrameDuration));
-    }
-    IEnumerator DodgeIFrames(float dodgeTiming)
-    {
         moveSpeed = dodgeSpeed;
         playerSprite.color = Color.red;
         GetComponent<Collider2D>().enabled = false;
@@ -277,6 +277,11 @@ public class PlayerMovement : MonoBehaviour
         {
             currentState = CharacterState.Sprinting; // Switch to sprinting state
         }
+    }
+
+    void HandleTiredState()
+    {
+        IsTired = true;
     }
 
     void HandleAttackingState()

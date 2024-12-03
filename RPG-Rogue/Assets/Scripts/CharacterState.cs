@@ -14,5 +14,6 @@ public enum CharacterState
     Moving,
     Sprinting,
     Attacking,
-    Dodging
+    Dodging,
+    Tired
 }
