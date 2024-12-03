@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
+    #region Variables
     Rigidbody2D rb; // Reference to player rigidbody
     Transform attackCircle; // Empty gameobject used to create hitbox
     LayerMask enemyLayer; // Used to only look for enemies with the hitbox
@@ -14,12 +15,15 @@ public class PlayerMovement : MonoBehaviour
     CharacterState currentState; // Current state of the player
 
     float attackRange = 0.5f; // Attack hitbox size
-    float iFrameDuration = 0.5f; // Seconds of Iframes per dodge roll
-    [SerializeField] float moveSpeed = 5.0f; // Dynamic movespeed
+    float iFrameDuration = 30f; // Invincibility frames per dodge roll
+    float dodgeStaminaCost = 10f; // Stamina cost for each dodge roll
+    float moveSpeed; // Dynamic movespeed - Set speed with stat sheet
     float baseMoveSpeed = 5.0f; // Base move speed; Should never change while in game
     float sprintSpeed = 7.0f; // The speed when sprinting
-    float staminaDrainSpeed = 5f; // The number of seconds that pass before the DrainStamina function is repeated
-    int originalStamina; // The amount of stamina that the player starts out with
+    float dodgeSpeed = 9.0f; // The speed the player will move while mid dodge
+    float staminaDrainSpeed = 5f; // The speed at which stamina will deplete when sprinting or rolling
+    float staminaRecoverSpeed = 3f; // The speed at which stamina will recover when idle or moving
+    float originalStamina; // The amount of stamina that the player starts out with
     bool IsMoving { get; set; } // Is the player moving
     bool IsSprinting { get; set; } // Is the player sprinting
     bool IsAttacking { get; set; } // Is the player attacking
@@ -32,6 +36,7 @@ public class PlayerMovement : MonoBehaviour
     InputAction dodge;
     InputAction interact;
     InputAction sprint;
+    #endregion
 
     void Awake()
     {
@@ -39,7 +44,7 @@ public class PlayerMovement : MonoBehaviour
         playerStats = GetComponent<StatHolder>();
         playerSprite = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
-        attackCircle = this.gameObject.transform.GetChild(0).GetComponent<Transform>(); // MAKE SURE THE ATTACK HITBOX GAMEOBJECT IS THE FIRST CHILD OF THE PLAYER
+        attackCircle = this.gameObject.transform.GetChild(0).GetComponent<Transform>(); // !!! MAKE SURE THE ATTACK HITBOX GAMEOBJECT IS THE FIRST CHILD OF THE PLAYER !!!
         enemyLayer = LayerMask.GetMask("Enemies"); // Used to differentiate targets within the player hitbox
     }
 
@@ -48,6 +53,7 @@ public class PlayerMovement : MonoBehaviour
         currentState = CharacterState.Idle; // Start player in Idle
         originalStamina = playerStats.stats.stamina; // Set the player stamina to the original amount when intialized
         iFrameDuration *= Time.deltaTime;
+        moveSpeed = playerStats.stats.speed;
     }
 
     private void OnEnable()
@@ -91,12 +97,6 @@ public class PlayerMovement : MonoBehaviour
     {
         // Used to calculate the movement and position of the player
         moveDirection = move.ReadValue<Vector2>();
-
-        // Clamp stamina
-        if (playerStats.stats.stamina < 0)
-            playerStats.stats.stamina = 0;
-        else if (playerStats.stats.stamina > originalStamina)
-            playerStats.stats.stamina = originalStamina;
 
         // Player Rotation based on movement
         #region Four Direction Movement
@@ -172,11 +172,12 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
-    #region State Functions
+    #region Handle State Functions
     void HandleIdleState()
     {
         // SetAnimation("Idle"); // Play idle animation
         moveSpeed = baseMoveSpeed;
+        playerStats.RecoverStamina(staminaRecoverSpeed); // When not sprinting or dodging, recover stamina
         IsSprinting = false; // Solution to pressing sprint without moving bug - Always false when Idle
         if (Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f && !playerAction.Player.Sprint.IsPressed()) // If there is movement input and sprint is not pressed...
         {
@@ -192,6 +193,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (playerAction.Player.Dodge.IsPressed())
         {
+            playerStats.DodgeStamina(dodgeStaminaCost); // Can't put in handle function or else it will be called repeatedly
             currentState = CharacterState.Dodging; // Switch to dodging state
         }
     }
@@ -200,6 +202,7 @@ public class PlayerMovement : MonoBehaviour
     {
         IsMoving = true;
         moveSpeed = baseMoveSpeed;
+        playerStats.RecoverStamina(staminaRecoverSpeed);
         if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f && !IsSprinting)
         {
             IsMoving = false;
@@ -217,6 +220,8 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (playerAction.Player.Dodge.IsPressed())
         {
+            IsMoving = false;
+            playerStats.DodgeStamina(dodgeStaminaCost);
             currentState = CharacterState.Dodging; // Switch to dodging state
         }
     }
@@ -225,7 +230,7 @@ public class PlayerMovement : MonoBehaviour
     {
         IsSprinting = true;
         moveSpeed = sprintSpeed;
-        //playerStats.DrainStamina(staminaDrainSpeed);
+        playerStats.DrainStamina(staminaDrainSpeed);
         if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f)
         {
             IsSprinting = false;
@@ -245,6 +250,7 @@ public class PlayerMovement : MonoBehaviour
         else if (playerAction.Player.Dodge.IsPressed())
         {
             IsSprinting = false;
+            playerStats.DodgeStamina(dodgeStaminaCost);
             currentState = CharacterState.Dodging; // Switch to dodging state
         }
     }
@@ -253,7 +259,29 @@ public class PlayerMovement : MonoBehaviour
     {
         IsDodging = true;
         StartCoroutine(DodgeIFrames(iFrameDuration));
-
+    }
+    IEnumerator DodgeIFrames(float dodgeTiming)
+    {
+        moveSpeed = dodgeSpeed;
+        playerSprite.color = Color.red;
+        GetComponent<Collider2D>().enabled = false;
+        yield return new WaitForSeconds(dodgeTiming);
+        playerSprite.color = Color.blue;
+        GetComponent<Collider2D>().enabled = true;
+        IsDodging = false;
+        if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f) // If there is no movement...
+        {
+            rb.linearVelocity = Vector2.zero;
+            currentState = CharacterState.Idle; // Switch to idle state
+        }
+        else if (Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f && !playerAction.Player.Sprint.IsPressed()) // If there is movement input and sprint is not pressed...
+        {
+            currentState = CharacterState.Moving; // Switch to moving state
+        }
+        else if (Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f && playerAction.Player.Sprint.IsPressed()) // If there is movement input but sprint is pressed...
+        {
+            currentState = CharacterState.Sprinting; // Switch to sprinting state
+        }
     }
 
     void HandleAttackingState()
@@ -284,38 +312,29 @@ public class PlayerMovement : MonoBehaviour
             Gizmos.DrawWireSphere(attackCircle.position, attackRange);
     }
 
-    IEnumerator DodgeIFrames(float dodgeTiming)
-    {
-        Debug.Log("Player is invincible... yay");
-        yield return new WaitForSeconds(dodgeTiming);
-        Debug.Log("Player is NOT invincible... booooooo");
-    }
 
-
-
-    #region Input Action Functions
+    #region Input Action Callbacks
     void Attacked(InputAction.CallbackContext context)
     {
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackCircle.position, attackRange, enemyLayer);
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackCircle.position, attackRange, enemyLayer); // Array that collects all gameobjects in the Enemy Layer that are touching the hitbox in front of the player
 
         foreach(Collider2D enemy in hitEnemies)
         {
             Debug.Log("Hit: " + enemy.name);
-            enemy.GetComponent<StatHolder>().TakeDamage(playerStats.stats.attack);
+            enemy.GetComponent<StatHolder>().TakeDamage(playerStats.stats.attack); // For each enemy in the hitbox at the time of an attack, use the TakeDamage function attached to the StatHolder script on them
         }
     }
 
     void Dodged(InputAction.CallbackContext context)
     {
-        IsDodging = true;
+        if (playerStats.stats.stamina > dodgeStaminaCost)
+            IsDodging = true;
     }
 
     void Sprinted(InputAction.CallbackContext context)
     {
         if (playerStats.stats.stamina > 0)
-        {
             IsSprinting = true;
-        }
     }
 
     void Interacted(InputAction.CallbackContext context)

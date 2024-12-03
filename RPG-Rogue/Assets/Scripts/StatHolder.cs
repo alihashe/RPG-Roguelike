@@ -6,11 +6,13 @@ public class StatHolder : MonoBehaviour
     
     int health;
     int mana;
-    int stamina;
+    float stamina;
+    float maxStamina;
     int attack;
     int defense;
     int mAttack;
     int mDefense;
+    float speed;
 
     void Start()
     {
@@ -21,11 +23,21 @@ public class StatHolder : MonoBehaviour
         defense = stats.defense;
         mAttack = stats.mAttack;
         mDefense = stats.mDefense;
+        speed = stats.speed;
+        maxStamina = stats.stamina;
     }
 
     void Update()
     {
-        // Clamp health to never go below 0
+        // Clamp to never go below 0 or over the max
+        if (stamina <= 0)
+        {
+            stamina = 0;
+        }
+        else if (stamina >= maxStamina)
+        {
+            stamina = maxStamina;
+        }
         if (health <= 0) 
         {
             health = 0;
@@ -46,9 +58,19 @@ public class StatHolder : MonoBehaviour
         }
     }
 
+    public void RecoverStamina(float recoverAmount)
+    {
+        stamina += (recoverAmount * Time.deltaTime);
+    }
+
     public void DrainStamina(float drainAmount)
     {
-        stamina -= (int)(drainAmount * Time.deltaTime);
+        stamina -= (drainAmount * Time.deltaTime);
+    }
+
+    public void DodgeStamina(float dodgeDrainAmount)
+    {
+        stamina -= dodgeDrainAmount;
     }
 
     public void Death()
