@@ -3,18 +3,20 @@ using UnityEngine;
 public class StatHolder : MonoBehaviour
 {
     public Statistics stats;
-    
-    int health;
-    int mana;
-    float stamina;
-    float maxStamina;
-    int attack;
-    int defense;
-    int mAttack;
-    int mDefense;
-    float speed;
 
-    void Start()
+    public int health;
+    public int maxHealth;
+    public int mana;
+    public int maxMana;
+    public float stamina;
+    public float maxStamina;
+    public int attack;
+    public int defense;
+    public int mAttack;
+    public int mDefense;
+    public float speed;
+
+    void Awake()
     {
         health = stats.health;
         mana = stats.mana;
@@ -24,6 +26,8 @@ public class StatHolder : MonoBehaviour
         mAttack = stats.mAttack;
         mDefense = stats.mDefense;
         speed = stats.speed;
+        maxHealth = stats.health;
+        maxMana = stats.mana;
         maxStamina = stats.stamina;
     }
 
@@ -42,6 +46,14 @@ public class StatHolder : MonoBehaviour
         {
             health = 0;
         }
+        if (mana <= 0)
+        {
+            mana = 0;
+        } 
+        else if (mana >= maxMana)
+        {
+            mana = maxMana;
+        }
     }
 
     public void TakeDamage(int rawDamage)
@@ -56,6 +68,21 @@ public class StatHolder : MonoBehaviour
                 Death();
             }
         }
+    }
+
+    public void RecoverHealth(int recoverAmount)
+    {
+        health += recoverAmount;
+    }
+    
+    public void RecoverMana(int recoverAmount)
+    {
+        mana += recoverAmount;
+    }
+
+    public void SpendMana(int manaAmount)
+    {
+        mana -= manaAmount;
     }
 
     public void RecoverStamina(float recoverAmount)
