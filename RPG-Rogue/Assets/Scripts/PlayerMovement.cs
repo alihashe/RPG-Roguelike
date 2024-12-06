@@ -13,13 +13,14 @@ public class PlayerMovement : MonoBehaviour
     SpriteRenderer playerSprite; // Reference for the player sprite
     PlayerInputActions playerAction; // Reference the system inputs that were converted to script
     StatHolder playerStats; // Create an instance of the attributes attached to the player
+    // EnemyAIController enemyAI; // Create an instance of the EnemyAIController
     CharacterState currentState; // Current state of the player
 
     float attackRange = 0.5f; // Attack hitbox size
     float tiredCooldownTime = 3f; // The amount of time the player spends in the tired state
     float dodgeCooldownTime = 0.5f; // The amount of time before the player can press dodge again
     float dodgeDuration = 0.5f; // Invincibility frames per dodge roll
-    float dodgeStaminaCost = 10f; // Stamina cost for each dodge roll
+    float dodgeStaminaCost = 15f; // Stamina cost for each dodge roll
     float dodgeSpeed = 9.0f; // The speed the player will move while mid dodge
     float moveSpeed; // Dynamic movespeed - Set speed with stat sheet
     float baseMoveSpeed = 5.0f; // Base move speed; Should never change while in game
@@ -289,7 +290,7 @@ public class PlayerMovement : MonoBehaviour
             StartCoroutine(DodgeCoolDown(dodgeCooldownTime));
             currentState = CharacterState.Sprinting; // Switch to sprinting state
         }
-        else if (playerStats.stamina <= 0)
+        else if (playerStats.stamina <= 0) // If stamina runs out...
         {
             currentState = CharacterState.Tired; // Switch to tired state
         }
@@ -306,8 +307,9 @@ public class PlayerMovement : MonoBehaviour
     {
         inTiredCooldown = true;
         moveSpeed = tiredSpeed;
-        staminaRecoverSpeed = 0;
+        staminaRecoverSpeed = 0f;
         yield return new WaitForSeconds(fatigueTime);
+        playerStats.stamina = 5f;
         staminaRecoverSpeed = staminaRecoveryTemp;
         inTiredCooldown = false;
         if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f && !inTiredCooldown)
@@ -345,7 +347,7 @@ public class PlayerMovement : MonoBehaviour
     }*/
     #endregion
 
-    // Draw hit box for testing
+    // Draw attack hit box
     void OnDrawGizmosSelected()
     {
         if (attackCircle != null)
