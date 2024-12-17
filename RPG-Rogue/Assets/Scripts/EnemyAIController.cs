@@ -1,36 +1,44 @@
+using NUnit.Framework;
 using Pathfinding;
 using UnityEngine;
 
 public class EnemyAIController : MonoBehaviour
 {
-    AIDestinationSetter aiScript; 
+    AIDestinationSetter aiScript; // Reference to the script used to set the target of movement for the enemy
     Transform target; // Used to set the target of the Enemy AI
     Transform playerT; // The transform position of the player
-    GameObject observeCircle; // Empty gameobject used to track if the player is near
-
-    // float observeRange = 4f; // Observe circle size
+    Transform[] waypoints; // The points that will be used to direct enemy movement
+    [SerializeField] float distanceToWaypoint; // The distance between this object and the current waypoint that is targeted
+    int stateNumber; // Determines the state that the enemy is in
 
     void Awake()
     {
         aiScript = GetComponent<AIDestinationSetter>();
-        playerT = GameObject.FindGameObjectWithTag("Player").transform;
-        observeCircle = this.gameObject.transform.GetChild(0).GetComponent<GameObject>(); // !!! MAKE SURE THE OBSERVE HITBOX GAMEOBJECT IS THE FIRST CHILD OF THE PLAYER !!!
+        playerT = GameObject.FindGameObjectWithTag("Player").transform; // Find the player location
     }
     
     void Update()
     {
+        FollowPlayer();
+        distanceToWaypoint = Vector2.Distance(this.transform.position, target.position);
         aiScript.target = target;
-        //if (Physics2D.OverlapCircle(observeCircle.transform.position, observeRange))
+        //if (target != playerT)
         //{
-        //    FollowPlayer();
+        //    foreach (Transform wp in waypoints)
+        //    {
+        //        if (distanceToWaypoint < )
+        //        {
+        //        }
+        //    }
         //}
-    }
-
-    private void OnTriggerStay2D()
-    {
-        if (observeCircle != null && observeCircle.CompareTag("Player"))
+        switch (stateNumber)
         {
-            Debug.Log("PLAAAAAAYYYYYEEEEERRRRRRRRRR");
+            case 0:
+                break;
+            case 1:
+                break;
+            case 2:
+                break;
         }
     }
 
@@ -43,11 +51,5 @@ public class EnemyAIController : MonoBehaviour
     {
         target = playerT;
     }
-
-    //void OnDrawGizmosSelected()
-    //{
-    //    if (observeCircle != null)
-    //        Gizmos.DrawWireSphere(observeCircle.transform.position, observeRange);
-    //}
 
 }
