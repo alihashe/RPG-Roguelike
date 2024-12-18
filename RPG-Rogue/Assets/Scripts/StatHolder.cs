@@ -63,10 +63,6 @@ public class StatHolder : MonoBehaviour
             int hitDamage = rawDamage - defense;
             health -= hitDamage;
             Debug.Log(this.gameObject.name + " has taken " + hitDamage.ToString() + " damage and has " + health.ToString() + " health left.");
-            if (health <= 0)
-            {
-                Death();
-            }
         }
     }
 
@@ -98,17 +94,6 @@ public class StatHolder : MonoBehaviour
     public void DodgeStamina(float dodgeDrainAmount)
     {
         stamina -= dodgeDrainAmount;
-    }
-
-    public void Death()
-    {
-        Debug.Log(this.gameObject.name + " has died!");
-        // Play a death animation
-
-        // Disable collider
-        GetComponent<CircleCollider2D>().enabled = false;
-        // Disable gameObject
-        this.enabled = false;
     }
 
 }

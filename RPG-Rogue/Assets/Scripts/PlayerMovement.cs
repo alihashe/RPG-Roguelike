@@ -359,7 +359,7 @@ public class PlayerMovement : MonoBehaviour
     {
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackCircle.position, attackRange, enemyLayer); // Array that collects all gameobjects in the Enemy Layer that are touching the hitbox in front of the player
 
-        foreach(Collider2D enemy in hitEnemies)
+        foreach (Collider2D enemy in hitEnemies)
         {
             Debug.Log("Hit: " + enemy.name);
             enemy.GetComponent<StatHolder>().TakeDamage(playerStats.attack); // For each enemy in the hitbox at the time of an attack, use the TakeDamage function attached to the StatHolder script on them

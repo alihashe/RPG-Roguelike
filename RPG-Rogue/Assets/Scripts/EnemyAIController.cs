@@ -1,5 +1,5 @@
-using NUnit.Framework;
 using Pathfinding;
+using System.Collections;
 using UnityEngine;
 
 public class EnemyAIController : MonoBehaviour
@@ -7,49 +7,100 @@ public class EnemyAIController : MonoBehaviour
     AIDestinationSetter aiScript; // Reference to the script used to set the target of movement for the enemy
     Transform target; // Used to set the target of the Enemy AI
     Transform playerT; // The transform position of the player
-    Transform[] waypoints; // The points that will be used to direct enemy movement
+    [SerializeField] Transform[] waypoints; // The points that will be used to direct enemy movement
     [SerializeField] float distanceToWaypoint; // The distance between this object and the current waypoint that is targeted
-    int stateNumber; // Determines the state that the enemy is in
+    float currentDistanceFromPlayer; // The current distance between this object and the player
+    float distanceFromPlayer = 6; // The distance the enemy can be before they start to pursue the player
+    int currentWaypointIndex = 0; // Used to determine which waypoint the enemy will move toward
+    EnemyState enemyState; // Determines the state that the enemy is in
+    StatHolder enemyStatHolder; // Instance of the stat holder attached to this object
 
     void Awake()
     {
         aiScript = GetComponent<AIDestinationSetter>();
         playerT = GameObject.FindGameObjectWithTag("Player").transform; // Find the player location
+        enemyStatHolder = GetComponent<StatHolder>();
     }
-    
+
+    void Start()
+    {
+        target = waypoints.Length > 0 ? waypoints[0] : playerT; // Set target to the first waypoint, or player if no waypoints
+        enemyState = EnemyState.Patrol;
+    }
+
     void Update()
     {
-        FollowPlayer();
-        distanceToWaypoint = Vector2.Distance(this.transform.position, target.position);
+        currentDistanceFromPlayer = Vector2.Distance(playerT.position, this.transform.position);
         aiScript.target = target;
-        //if (target != playerT)
-        //{
-        //    foreach (Transform wp in waypoints)
-        //    {
-        //        if (distanceToWaypoint < )
-        //        {
-        //        }
-        //    }
-        //}
-        switch (stateNumber)
+        switch (enemyState)
         {
-            case 0:
+            case EnemyState.Patrol:
+                HandlePatrol();
                 break;
-            case 1:
+            case EnemyState.Pursuit:
+                HandlePursuit();
                 break;
-            case 2:
+            case EnemyState.Cautious:
+                HandleCautious();
                 break;
+            case EnemyState.Dead:
+                HandleDeath();
+                break;
+        }
+        if (enemyStatHolder.health <= 0)
+            enemyState = EnemyState.Dead;
+    }
+
+    #region Enemy Handle Functions
+    void HandlePatrol()
+    {
+        if (target != playerT)
+        {
+            target = waypoints[currentWaypointIndex];
+            distanceToWaypoint = Vector2.Distance(this.transform.position, target.position);
+            if (distanceToWaypoint <= 1.5f)
+            {
+                currentWaypointIndex = (currentWaypointIndex + 1) % waypoints.Length;
+            }
+        }
+        if (currentDistanceFromPlayer < distanceFromPlayer)
+        {
+            enemyState = EnemyState.Pursuit;
         }
     }
 
-    public void FollowNewTarget(Transform targetTransform)
+    void HandlePursuit()
     {
-        target = targetTransform;
+        this.GetComponent<SpriteRenderer>().color = Color.red;
+        target = playerT;
+        if (currentDistanceFromPlayer >= distanceFromPlayer)
+        {
+            this.GetComponent<SpriteRenderer>().color = Color.white;
+            target = null;
+            enemyState = EnemyState.Patrol;
+        }
     }
 
-    public void FollowPlayer()
+    IEnumerator HandleCautious()
     {
-        target = playerT;
+        yield return new WaitForSeconds(1);
+    }
+
+    void HandleDeath()
+    {
+        target = null;
+        Color tmpCol = this.GetComponent<SpriteRenderer>().color;
+        tmpCol.a = 0.4f;
+        GetComponent<SpriteRenderer>().color = tmpCol;
+        GetComponent<Collider2D>().isTrigger = true;
+        // Create loot state here later
+    }
+
+    #endregion
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.DrawWireSphere(this.transform.position, (distanceFromPlayer)); // Draw the circle that displays how close the object can be to the player before pursuing
     }
 
 }

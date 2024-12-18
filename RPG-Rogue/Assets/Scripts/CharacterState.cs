@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public enum CharacterState
 {
     /* When adding another CharacterState make sure you update the following aspects of the PlayerMovement script
