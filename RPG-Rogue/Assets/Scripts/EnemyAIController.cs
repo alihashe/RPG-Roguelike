@@ -47,7 +47,7 @@ public class EnemyAIController : MonoBehaviour
                 HandleDeath();
                 break;
         }
-        if (enemyStatHolder.health <= 0)
+        if (enemyStatHolder.getHealth <= 0)
             enemyState = EnemyState.Dead;
     }
 

@@ -4,17 +4,17 @@ public class StatHolder : MonoBehaviour
 {
     public Statistics stats;
 
-    public int health;
-    public int maxHealth;
-    public int mana;
-    public int maxMana;
-    public float stamina;
-    public float maxStamina;
-    public int attack;
-    public int defense;
-    public int mAttack;
-    public int mDefense;
-    public float speed;
+    int health { get; set; }
+    int maxHealth;
+    int mana;
+    int maxMana;
+    float stamina;
+    float maxStamina;
+    int attack;
+    int defense;
+    int mAttack;
+    int mDefense;
+    float speed;
 
     void Awake()
     {
@@ -56,6 +56,75 @@ public class StatHolder : MonoBehaviour
         }
     }
 
+    #region Get/Set Methods
+    public int getHealth
+    {
+        get { return health; }
+        set { health = value; }
+    }
+
+    public int getMana
+    {
+        get { return mana; }
+        set { mana = value; }
+    }
+
+    public float getStamina
+    {
+        get { return stamina; }
+        set { stamina = value; }
+    }
+
+    public int getMaxHealth
+    {
+        get { return maxHealth; }
+        set { maxHealth = value; }
+    }
+
+    public int getMaxMana
+    {
+        get { return maxMana; }
+        set { maxMana = value; }
+    }
+
+    public float getMaxStamina
+    {
+        get { return maxStamina; }
+        set { maxStamina = value; }
+    }
+
+    public int getAttack
+    {
+        get { return attack; }
+        set { attack = value; }
+    }
+
+    public int getDefense
+    {
+        get { return defense; }
+        set { defense = value; }
+    }
+
+    public int getMAttack
+    {
+        get { return mAttack; }
+        set { mAttack = value; }
+    }
+
+    public int getMDefense
+    {
+        get { return mDefense; }
+        set { mDefense = value; }
+    }
+
+    public float getSpeed
+    {
+        get { return speed; }
+        set { speed = value; }
+    }
+    #endregion
+
+    #region Increase/Decrease Methods
     public void TakeDamage(int rawDamage)
     {
         if (health > 0)
@@ -95,5 +164,6 @@ public class StatHolder : MonoBehaviour
     {
         stamina -= dodgeDrainAmount;
     }
+    #endregion
 
 }

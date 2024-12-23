@@ -3,7 +3,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerManager : MonoBehaviour
 {
     #region Variables
     Rigidbody2D rb; // Reference to player rigidbody
@@ -13,12 +13,11 @@ public class PlayerMovement : MonoBehaviour
     SpriteRenderer playerSprite; // Reference for the player sprite
     PlayerInputActions playerAction; // Reference the system inputs that were converted to script
     StatHolder playerStats; // Create an instance of the attributes attached to the player
-    // EnemyAIController enemyAI; // Create an instance of the EnemyAIController
     CharacterState currentState; // Current state of the player
 
     float attackRange = 0.5f; // Attack hitbox size
     float tiredCooldownTime = 3f; // The amount of time the player spends in the tired state
-    float dodgeCooldownTime = 1.5f; // The amount of time before the player can press dodge again
+    float dodgeCooldownTime = 1f; // The amount of time before the player can press dodge again
     float dodgeDuration = 0.25f; // Invincibility frames per dodge roll
     float dodgeStaminaCost = 15f; // Stamina cost for each dodge roll
     float dodgeSpeed = 8.0f; // The speed the player will move while mid dodge
@@ -29,7 +28,7 @@ public class PlayerMovement : MonoBehaviour
     float staminaDrainSpeed = 10f; // The speed at which stamina will deplete when sprinting or rolling
     float staminaRecoverSpeed = 6f; // The speed at which stamina will recover when idle or moving
     float staminaRecoveryTemp; // Temp variable used to resume stamina recovery speed after temporarily halting it
-    
+
     bool inDodgeCooldown { get; set; } // If the player just pressed dodge, this prevents spam and bugs
     bool inTiredCooldown { get; set; } // If the player runs out of stamina, this prevents them from sprinting or dodging by putting them in the tired state
     bool isMoving { get; set; } // Is the player moving
@@ -60,7 +59,7 @@ public class PlayerMovement : MonoBehaviour
     void Start()
     {
         currentState = CharacterState.Idle; // Start player in Idle
-        moveSpeed = playerStats.speed; // Set the movespeed to the speed set through the stat instance
+        moveSpeed = playerStats.getSpeed; // Set the movespeed to the speed set through the stat instance
         staminaRecoveryTemp = staminaRecoverSpeed; // Set the temp variable to the correct original float
     }
 
@@ -163,7 +162,7 @@ public class PlayerMovement : MonoBehaviour
         #endregion
 
         // Use this bool to determine what color the stamina bar should be
-        if (playerStats.stamina < dodgeStaminaCost)
+        if (playerStats.getStamina < dodgeStaminaCost)
             lowStamina = true;
         else lowStamina = false;
 
@@ -226,7 +225,8 @@ public class PlayerMovement : MonoBehaviour
             rb.linearVelocity = Vector2.zero;
             currentState = CharacterState.Idle; // Switch to idle state
         }
-        else if (playerAction.Player.Sprint.IsPressed()) { 
+        else if (playerAction.Player.Sprint.IsPressed())
+        {
             isMoving = false;
             currentState = CharacterState.Sprinting; // Switch to sprinting state
         }
@@ -235,7 +235,7 @@ public class PlayerMovement : MonoBehaviour
             isMoving = false;
             currentState = CharacterState.Attacking; // Switch to attack state
         }
-        else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && (playerStats.stamina > dodgeStaminaCost))
+        else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && (playerStats.getStamina > dodgeStaminaCost))
         {
             isMoving = false;
             playerStats.DodgeStamina(dodgeStaminaCost);
@@ -265,13 +265,13 @@ public class PlayerMovement : MonoBehaviour
             isSprinting = false;
             currentState = CharacterState.Attacking; // Switch to attacking state
         }
-        else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && !inTiredCooldown && (playerStats.stamina > dodgeStaminaCost))
+        else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && !inTiredCooldown && (playerStats.getStamina > dodgeStaminaCost))
         {
             isSprinting = false;
             playerStats.DodgeStamina(dodgeStaminaCost);
             currentState = CharacterState.Dodging; // Switch to dodging state
         }
-        else if (playerStats.stamina <= 0)
+        else if (playerStats.getStamina <= 0)
         {
             isSprinting = false;
             currentState = CharacterState.Tired; // Switch to tired state
@@ -303,7 +303,7 @@ public class PlayerMovement : MonoBehaviour
             StartCoroutine(DodgeCoolDown(dodgeCooldownTime));
             currentState = CharacterState.Sprinting; // Switch to sprinting state
         }
-        else if (playerStats.stamina <= 1f) // If stamina runs out...
+        else if (playerStats.getStamina <= 1f) // If stamina runs out...
         {
             currentState = CharacterState.Tired; // Switch to tired state
         }
@@ -374,19 +374,19 @@ public class PlayerMovement : MonoBehaviour
         foreach (Collider2D enemy in hitEnemies)
         {
             Debug.Log("Hit: " + enemy.name);
-            enemy.GetComponent<StatHolder>().TakeDamage(playerStats.attack); // For each enemy in the hitbox at the time of an attack, use the TakeDamage function attached to the StatHolder script on them
+            enemy.GetComponent<StatHolder>().TakeDamage(playerStats.getAttack); // For each enemy in the hitbox at the time of an attack, use the TakeDamage function attached to the StatHolder script on them
         }
     }
 
     void Dodged(InputAction.CallbackContext context)
     {
-        if (playerStats.stamina > dodgeStaminaCost && currentState != CharacterState.Idle)
+        if (currentState != CharacterState.Idle)
             isDodging = true;
     }
 
     void Sprinted(InputAction.CallbackContext context)
     {
-        if (playerStats.stamina > 0)
+        if (playerStats.getStamina > 0)
             isSprinting = true;
     }
 

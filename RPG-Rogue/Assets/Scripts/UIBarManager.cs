@@ -19,9 +19,9 @@ public class UIBarManager : MonoBehaviour
 
     void Start()
     {
-        healthSlider.maxValue = playerStats.maxHealth;
-        magicSlider.maxValue = playerStats.maxMana;
-        staminaSlider.maxValue = playerStats.maxStamina;
+        healthSlider.maxValue = playerStats.getMaxHealth;
+        magicSlider.maxValue = playerStats.getMaxMana;
+        staminaSlider.maxValue = playerStats.getMaxStamina;
         healthSlider.minValue = 0;
         magicSlider.minValue = 0;
         staminaSlider.minValue = 0;
@@ -29,8 +29,8 @@ public class UIBarManager : MonoBehaviour
 
     void Update()
     {
-        healthSlider.value = playerStats.health;
-        magicSlider.value = playerStats.mana;
-        staminaSlider.value = playerStats.stamina;
+        healthSlider.value = playerStats.getHealth;
+        magicSlider.value = playerStats.getMana;
+        staminaSlider.value = playerStats.getStamina;
     }
 }

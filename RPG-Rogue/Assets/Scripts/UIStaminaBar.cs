@@ -3,13 +3,13 @@ using UnityEngine.UI;
 
 public class UIStaminaBar : MonoBehaviour
 {
-    PlayerMovement player;
+    PlayerManager player;
     Image fillImage;
     Color origColor;
 
     void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerMovement>();
+        player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerManager>();
         fillImage = GetComponent<Image>();
         origColor = fillImage.color;
     }
