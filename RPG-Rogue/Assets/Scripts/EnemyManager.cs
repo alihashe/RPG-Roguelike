@@ -2,7 +2,7 @@ using Pathfinding;
 using System.Collections;
 using UnityEngine;
 
-public class EnemyAIController : MonoBehaviour
+public class EnemyManager : MonoBehaviour
 {
     AIDestinationSetter aiScript; // Reference to the script used to set the target of movement for the enemy
     Transform target; // Used to set the target of the Enemy AI
@@ -10,7 +10,7 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField] Transform[] waypoints; // The points that will be used to direct enemy movement
     [SerializeField] float distanceToWaypoint; // The distance between this object and the current waypoint that is targeted
     float currentDistanceFromPlayer; // The current distance between this object and the player
-    float distanceFromPlayer = 6; // The distance the enemy can be before they start to pursue the player
+    float playerPursuitDistance = 6; // The distance the enemy can be before they start to pursue the player
     int currentWaypointIndex = 0; // Used to determine which waypoint the enemy will move toward
     EnemyState enemyState; // Determines the state that the enemy is in
     StatHolder enemyStatHolder; // Instance of the stat holder attached to this object
@@ -47,7 +47,7 @@ public class EnemyAIController : MonoBehaviour
                 HandleDeath();
                 break;
         }
-        if (enemyStatHolder.getHealth <= 0)
+        if (enemyStatHolder.GetHealth <= 0)
             enemyState = EnemyState.Dead;
     }
 
@@ -59,31 +59,29 @@ public class EnemyAIController : MonoBehaviour
             target = waypoints[currentWaypointIndex];
             distanceToWaypoint = Vector2.Distance(this.transform.position, target.position);
             if (distanceToWaypoint <= 1.5f)
-            {
                 currentWaypointIndex = (currentWaypointIndex + 1) % waypoints.Length;
-            }
         }
-        if (currentDistanceFromPlayer < distanceFromPlayer)
-        {
+        if (currentDistanceFromPlayer < playerPursuitDistance)
             enemyState = EnemyState.Pursuit;
-        }
     }
 
     void HandlePursuit()
     {
         this.GetComponent<SpriteRenderer>().color = Color.red;
         target = playerT;
-        if (currentDistanceFromPlayer >= distanceFromPlayer)
+        if (currentDistanceFromPlayer >= playerPursuitDistance)
         {
             this.GetComponent<SpriteRenderer>().color = Color.white;
             target = null;
-            enemyState = EnemyState.Patrol;
+            enemyState = EnemyState.Cautious;
         }
     }
 
     IEnumerator HandleCautious()
     {
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(3f);
+        if (currentDistanceFromPlayer < playerPursuitDistance)
+            enemyState = EnemyState.Patrol;
     }
 
     void HandleDeath()
@@ -100,7 +98,7 @@ public class EnemyAIController : MonoBehaviour
 
     void OnDrawGizmosSelected()
     {
-        Gizmos.DrawWireSphere(this.transform.position, (distanceFromPlayer)); // Draw the circle that displays how close the object can be to the player before pursuing
+        Gizmos.DrawWireSphere(this.transform.position, (playerPursuitDistance)); // Draw the circle that displays how close the object can be to the player before pursuing
     }
 
 }

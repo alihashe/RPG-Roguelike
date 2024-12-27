@@ -59,7 +59,7 @@ public class PlayerManager : MonoBehaviour
     void Start()
     {
         currentState = CharacterState.Idle; // Start player in Idle
-        moveSpeed = playerStats.getSpeed; // Set the movespeed to the speed set through the stat instance
+        moveSpeed = playerStats.GetSpeed; // Set the movespeed to the speed set through the stat instance
         staminaRecoveryTemp = staminaRecoverSpeed; // Set the temp variable to the correct original float
     }
 
@@ -162,7 +162,7 @@ public class PlayerManager : MonoBehaviour
         #endregion
 
         // Use this bool to determine what color the stamina bar should be
-        if (playerStats.getStamina < dodgeStaminaCost)
+        if (playerStats.GetStamina < dodgeStaminaCost)
             lowStamina = true;
         else lowStamina = false;
 
@@ -235,7 +235,7 @@ public class PlayerManager : MonoBehaviour
             isMoving = false;
             currentState = CharacterState.Attacking; // Switch to attack state
         }
-        else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && (playerStats.getStamina > dodgeStaminaCost))
+        else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && (playerStats.GetStamina > dodgeStaminaCost))
         {
             isMoving = false;
             playerStats.DodgeStamina(dodgeStaminaCost);
@@ -265,13 +265,13 @@ public class PlayerManager : MonoBehaviour
             isSprinting = false;
             currentState = CharacterState.Attacking; // Switch to attacking state
         }
-        else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && !inTiredCooldown && (playerStats.getStamina > dodgeStaminaCost))
+        else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && !inTiredCooldown && (playerStats.GetStamina > dodgeStaminaCost))
         {
             isSprinting = false;
             playerStats.DodgeStamina(dodgeStaminaCost);
             currentState = CharacterState.Dodging; // Switch to dodging state
         }
-        else if (playerStats.getStamina <= 0)
+        else if (playerStats.GetStamina <= 0)
         {
             isSprinting = false;
             currentState = CharacterState.Tired; // Switch to tired state
@@ -303,7 +303,7 @@ public class PlayerManager : MonoBehaviour
             StartCoroutine(DodgeCoolDown(dodgeCooldownTime));
             currentState = CharacterState.Sprinting; // Switch to sprinting state
         }
-        else if (playerStats.getStamina <= 1f) // If stamina runs out...
+        else if (playerStats.GetStamina <= 1f) // If stamina runs out...
         {
             currentState = CharacterState.Tired; // Switch to tired state
         }
@@ -374,7 +374,7 @@ public class PlayerManager : MonoBehaviour
         foreach (Collider2D enemy in hitEnemies)
         {
             Debug.Log("Hit: " + enemy.name);
-            enemy.GetComponent<StatHolder>().TakeDamage(playerStats.getAttack); // For each enemy in the hitbox at the time of an attack, use the TakeDamage function attached to the StatHolder script on them
+            enemy.GetComponent<StatHolder>().TakeDamage(playerStats.GetAttack); // For each enemy in the hitbox at the time of an attack, use the TakeDamage function attached to the StatHolder script on them
         }
     }
 
@@ -386,7 +386,7 @@ public class PlayerManager : MonoBehaviour
 
     void Sprinted(InputAction.CallbackContext context)
     {
-        if (playerStats.getStamina > 0)
+        if (playerStats.GetStamina > 0)
             isSprinting = true;
     }
 

@@ -4,7 +4,7 @@ public class StatHolder : MonoBehaviour
 {
     public Statistics stats;
 
-    int health { get; set; }
+    int health;
     int maxHealth;
     int mana;
     int maxMana;
@@ -57,70 +57,70 @@ public class StatHolder : MonoBehaviour
     }
 
     #region Get/Set Methods
-    public int getHealth
+    public int GetHealth
     {
         get { return health; }
-        set { health = value; }
+        private set { health = value; }
     }
 
-    public int getMana
+    public int GetMana
     {
         get { return mana; }
-        set { mana = value; }
+        private set { mana = value; }
     }
 
-    public float getStamina
+    public float GetStamina
     {
         get { return stamina; }
-        set { stamina = value; }
+        private set { stamina = value; }
     }
 
-    public int getMaxHealth
+    public int GetMaxHealth
     {
         get { return maxHealth; }
-        set { maxHealth = value; }
+        private set { maxHealth = value; }
     }
 
-    public int getMaxMana
+    public int GetMaxMana
     {
         get { return maxMana; }
-        set { maxMana = value; }
+        private set { maxMana = value; }
     }
 
-    public float getMaxStamina
+    public float GetMaxStamina
     {
         get { return maxStamina; }
-        set { maxStamina = value; }
+        private set { maxStamina = value; }
     }
 
-    public int getAttack
+    public int GetAttack
     {
         get { return attack; }
-        set { attack = value; }
+        private set { attack = value; }
     }
 
-    public int getDefense
+    public int GetDefense
     {
         get { return defense; }
-        set { defense = value; }
+        private set { defense = value; }
     }
 
-    public int getMAttack
+    public int GetMAttack
     {
         get { return mAttack; }
-        set { mAttack = value; }
+        private set { mAttack = value; }
     }
 
-    public int getMDefense
+    public int GetMDefense
     {
         get { return mDefense; }
-        set { mDefense = value; }
+        private set { mDefense = value; }
     }
 
-    public float getSpeed
+    public float GetSpeed
     {
         get { return speed; }
-        set { speed = value; }
+        private set { speed = value; }
     }
     #endregion
 
