@@ -11,4 +11,5 @@ public class Statistics : ScriptableObject
     public int mAttack;
     public int mDefense;
     public float speed;
+    public float sprintSpeed;
 }

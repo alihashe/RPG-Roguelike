@@ -15,6 +15,7 @@ public class StatHolder : MonoBehaviour
     int mAttack;
     int mDefense;
     float speed;
+    float sprintSpeed;
 
     void Awake()
     {
@@ -26,6 +27,7 @@ public class StatHolder : MonoBehaviour
         mAttack = stats.mAttack;
         mDefense = stats.mDefense;
         speed = stats.speed;
+        sprintSpeed = stats.sprintSpeed;
         maxHealth = stats.health;
         maxMana = stats.mana;
         maxStamina = stats.stamina;
@@ -122,6 +124,13 @@ public class StatHolder : MonoBehaviour
         get { return speed; }
         private set { speed = value; }
     }
+
+    public float GetSprintSpeed
+    {
+        get { return sprintSpeed; }
+        private set { sprintSpeed = value; }
+    }
+
     #endregion
 
     #region Increase/Decrease Methods

@@ -20,3 +20,4 @@ MonoBehaviour:
   mAttack: 20
   mDefense: 20
   speed: 5
+  sprintSpeed: 7

@@ -10,7 +10,9 @@ public class EnemyManager : MonoBehaviour
     [SerializeField] Transform[] waypoints; // The points that will be used to direct enemy movement
     [SerializeField] float distanceToWaypoint; // The distance between this object and the current waypoint that is targeted
     float currentDistanceFromPlayer; // The current distance between this object and the player
-    float playerPursuitDistance = 6; // The distance the enemy can be before they start to pursue the player
+    float playerPursuitDistance = 8; // The distance the enemy can be before they start to pursue the player
+    float cautiousTimer = 5f; // The amount of time the enemy will stop for after losing sight of the player and before returning to patrol
+    float cautiousTemp;
     int currentWaypointIndex = 0; // Used to determine which waypoint the enemy will move toward
     EnemyState enemyState; // Determines the state that the enemy is in
     StatHolder enemyStatHolder; // Instance of the stat holder attached to this object
@@ -24,6 +26,7 @@ public class EnemyManager : MonoBehaviour
 
     void Start()
     {
+        cautiousTemp = cautiousTimer;
         target = waypoints.Length > 0 ? waypoints[0] : playerT; // Set target to the first waypoint, or player if no waypoints
         enemyState = EnemyState.Patrol;
     }
@@ -32,6 +35,7 @@ public class EnemyManager : MonoBehaviour
     {
         currentDistanceFromPlayer = Vector2.Distance(playerT.position, this.transform.position);
         aiScript.target = target;
+        cautiousTimer -= Time.deltaTime;
         switch (enemyState)
         {
             case EnemyState.Patrol:
@@ -54,6 +58,7 @@ public class EnemyManager : MonoBehaviour
     #region Enemy Handle Functions
     void HandlePatrol()
     {
+        this.GetComponent<SpriteRenderer>().color = Color.white;
         if (target != playerT)
         {
             target = waypoints[currentWaypointIndex];
@@ -71,16 +76,18 @@ public class EnemyManager : MonoBehaviour
         target = playerT;
         if (currentDistanceFromPlayer >= playerPursuitDistance)
         {
-            this.GetComponent<SpriteRenderer>().color = Color.white;
             target = null;
+            cautiousTimer = cautiousTemp;
             enemyState = EnemyState.Cautious;
         }
     }
 
-    IEnumerator HandleCautious()
+    void HandleCautious()
     {
-        yield return new WaitForSeconds(3f);
+        this.GetComponent<SpriteRenderer>().color = Color.yellow;
         if (currentDistanceFromPlayer < playerPursuitDistance)
+            enemyState = EnemyState.Pursuit;
+        else if (cautiousTimer < 0)
             enemyState = EnemyState.Patrol;
     }
 
