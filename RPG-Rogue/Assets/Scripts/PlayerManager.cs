@@ -18,15 +18,15 @@ public class PlayerManager : MonoBehaviour
     float attackRange = 0.5f; // Attack hitbox size
     [SerializeField] float tiredCooldownTime = 3f; // The amount of time the player spends in the tired state
     float tiredTempTime;
-    float dodgeCooldownTime = 1.5f; // The amount of time before the player can press dodge again
+    float dodgeCooldownTime = 0.5f; // The amount of time before the player can press dodge again
     float dodgeTemp; // The temp variable used to store the initial dodge cooldown time
     float dodgeDuration = 0.25f; // Invincibility frames per dodge roll
-    float dodgeStaminaCost = 20f; // Stamina cost for each dodge roll
+    float dodgeStaminaCost = 15f; // Stamina cost for each dodge roll
     float dodgeSpeed = 8.0f; // The speed the player will move while mid dodge
     float moveSpeed; // Dynamic movespeed - Set speed with stat sheet
     float tiredSpeed = 4.0f; // The speed when under fatigue
-    float staminaDrainSpeed = 10f; // The speed at which stamina will deplete when sprinting or rolling
-    float staminaRecoverSpeed = 8f; // The speed at which stamina will recover when idle or moving
+    float staminaDrainSpeed = 15f; // The speed at which stamina will deplete when sprinting
+    float staminaRecoverSpeed = 10f; // The speed at which stamina will recover when idle or moving
     float staminaRecoveryTemp; // Temp variable used to resume stamina recovery speed after temporarily halting it
 
     bool inDodgeCooldown { get; set; } // If the player just pressed dodge, this prevents spam and bugs
@@ -50,7 +50,7 @@ public class PlayerManager : MonoBehaviour
     {
         playerAction = new PlayerInputActions();
         playerStats = GetComponent<StatHolder>();
-        playerSprite = GetComponent<SpriteRenderer>();
+        playerSprite = GetComponentInChildren<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
         attackCircle = this.gameObject.transform.GetChild(0).GetComponent<Transform>(); // !!! MAKE SURE THE ATTACK HITBOX GAMEOBJECT IS THE FIRST CHILD OF THE PLAYER !!!
         enemyLayer = LayerMask.GetMask("Enemies"); // Used to differentiate targets within the player hitbox
@@ -207,7 +207,7 @@ public class PlayerManager : MonoBehaviour
                 HandleSprintingState();
                 break;
             case CharacterState.Attacking:
-                HandleAttackingState();
+                //HandleAttackingState();
                 break;
             case CharacterState.Dodging:
                 StartCoroutine(HandleDodgingState(dodgeDuration));
@@ -234,10 +234,7 @@ public class PlayerManager : MonoBehaviour
         {
             currentState = CharacterState.Sprinting; // Switch to sprinting state
         }
-        else if (isAttacking)
-        {
-            currentState = CharacterState.Attacking; // Switch to attacking state
-        }
+
     }
 
     void HandleMovingState()
@@ -255,11 +252,6 @@ public class PlayerManager : MonoBehaviour
         {
             isMoving = false;
             currentState = CharacterState.Sprinting; // Switch to sprinting state
-        }
-        else if (isAttacking)
-        {
-            isMoving = false;
-            currentState = CharacterState.Attacking; // Switch to attack state
         }
         else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && (playerStats.GetStamina > dodgeStaminaCost) && !inTiredCooldown)
         {
@@ -288,11 +280,6 @@ public class PlayerManager : MonoBehaviour
         {
             isSprinting = false;
             currentState = CharacterState.Moving; // Switch to moving state
-        }
-        else if (isAttacking)
-        {
-            isSprinting = false;
-            currentState = CharacterState.Attacking; // Switch to attacking state
         }
         else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && !inTiredCooldown && (playerStats.GetStamina > dodgeStaminaCost))
         {
@@ -338,25 +325,6 @@ public class PlayerManager : MonoBehaviour
         }
     }
 
-    void HandleAttackingState()
-    {
-        Debug.Log("Is Attacking State");
-        // Set attacking animation
-        //      SetAnimation("Attack");
-        //      After the attack finishes, transition back to idle
-        if (!isAttacking)
-        {
-            currentState = CharacterState.Idle;  // Switch to idle state
-        }
-    }
-
-    // Set animation based on the state   KEEP FOR LATER
-    /*private void SetAnimation(string animationName)
-    {
-        // Example of setting animation using an Animator component
-        Animator animator = GetComponent<Animator>();
-        animator.Play(animationName);
-    }*/
     #endregion
 
     // Draw attack hit box
