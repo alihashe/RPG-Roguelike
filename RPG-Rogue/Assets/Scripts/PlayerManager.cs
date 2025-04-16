@@ -16,7 +16,7 @@ public class PlayerManager : MonoBehaviour
     CharacterState currentState; // Current state of the player
 
     float attackRange = 0.5f; // Attack hitbox size
-    [SerializeField] float tiredCooldownTime = 3f; // The amount of time the player spends in the tired state
+    float tiredCooldownTime = 2f; // The amount of time the player spends in the tired state
     float tiredTempTime;
     float dodgeCooldownTime = 0.5f; // The amount of time before the player can press dodge again
     float dodgeTemp; // The temp variable used to store the initial dodge cooldown time
@@ -24,19 +24,19 @@ public class PlayerManager : MonoBehaviour
     float dodgeStaminaCost = 15f; // Stamina cost for each dodge roll
     float dodgeSpeed = 8.0f; // The speed the player will move while mid dodge
     float moveSpeed; // Dynamic movespeed - Set speed with stat sheet
-    float tiredSpeed = 4.0f; // The speed when under fatigue
+    float tiredSpeed = 2.0f; // The speed when under fatigue
     float staminaDrainSpeed = 15f; // The speed at which stamina will deplete when sprinting
     float staminaRecoverSpeed = 10f; // The speed at which stamina will recover when idle or moving
     float staminaRecoveryTemp; // Temp variable used to resume stamina recovery speed after temporarily halting it
 
-    bool inDodgeCooldown { get; set; } // If the player just pressed dodge, this prevents spam and bugs
-    bool inTiredCooldown { get; set; } // If the player runs out of stamina, this prevents them from sprinting or dodging by putting them in the tired state
-    bool isMoving { get; set; } // Is the player moving
-    bool isSprinting { get; set; } // Is the player sprinting
-    bool isAttacking { get; set; } // Is the player attacking
-    bool isDodging { get; set; } // Is the player dodging
-    bool isInvulnerable { get; set; } // Should the player be attackable
-    public bool lowStamina { get; set; } // Used to change the stamina bar color when stamina is low
+    bool InDodgeCooldown { get; set; } // If the player just pressed dodge, this prevents spam and bugs
+    bool InTiredCooldown { get; set; } // If the player runs out of stamina, this prevents them from sprinting or dodging by putting them in the tired state
+    bool IsMoving { get; set; } // Is the player moving
+    bool IsSprinting { get; set; } // Is the player sprinting
+    bool IsAttacking { get; set; } // Is the player attacking
+    bool IsDodging { get; set; } // Is the player dodging
+    public bool IsInvulnerable { get; set; } // Should the player be attackable
+    public bool LowStamina { get; set; } // Used to change the stamina bar color when stamina is low
 
     // Instances of actions from the Input Manager
     InputAction move;
@@ -63,6 +63,7 @@ public class PlayerManager : MonoBehaviour
         staminaRecoveryTemp = staminaRecoverSpeed; // Set the temp variable to the correct original float
         dodgeTemp = dodgeCooldownTime;
         tiredTempTime = tiredCooldownTime;
+        tiredCooldownTime =- 2;
     }
 
     void OnEnable()
@@ -102,7 +103,7 @@ public class PlayerManager : MonoBehaviour
         rb.linearVelocity = new Vector2(moveDirection.x * moveSpeed, moveDirection.y * moveSpeed);
 
         // Handles the force propulsion when dodging
-        if (moveDirection != Vector2.zero && isDodging && !inDodgeCooldown)
+        if (moveDirection != Vector2.zero && IsDodging && !InDodgeCooldown)
             rb.AddForce((moveDirection * dodgeSpeed), ForceMode2D.Impulse);
 
     }
@@ -115,19 +116,21 @@ public class PlayerManager : MonoBehaviour
         // When the number is positive, the player can dodge again
         dodgeCooldownTime -= Time.deltaTime;
         if (dodgeCooldownTime > 0)
-            inDodgeCooldown = true;
+            InDodgeCooldown = true;
         else
-            inDodgeCooldown = false;
+            InDodgeCooldown = false;
 
         tiredCooldownTime -= Time.deltaTime;
         if (tiredCooldownTime > 0)
         {
-            inTiredCooldown = true;
+            InTiredCooldown = true;
             staminaRecoverSpeed = 0;
+            moveSpeed = tiredSpeed;
         }
         else
         {
-            inTiredCooldown = false;
+            InTiredCooldown = false;
+            moveSpeed = playerStats.GetSpeed;
             staminaRecoverSpeed = staminaRecoveryTemp;
         }
 
@@ -185,8 +188,8 @@ public class PlayerManager : MonoBehaviour
 
         // Use this bool to determine what color the stamina bar should be
         if (playerStats.GetStamina < dodgeStaminaCost)
-            lowStamina = true;
-        else lowStamina = false;
+            LowStamina = true;
+        else LowStamina = false;
 
         // Determines when the player should be recovering stamina
         if (currentState == CharacterState.Idle || currentState == CharacterState.Moving)
@@ -220,17 +223,13 @@ public class PlayerManager : MonoBehaviour
     void HandleIdleState()
     {
         // SetAnimation("Idle"); // Play idle animation
-        if (!inTiredCooldown)
-            moveSpeed = playerStats.GetSpeed;
-        else
-            moveSpeed = tiredSpeed;
-        isDodging = false;
-        isSprinting = false; // Solution to pressing sprint without moving bug - Always false when Idle
+        IsDodging = false;
+        IsSprinting = false; // Solution to pressing sprint without moving bug - Always false when Idle
         if (Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f && !playerAction.Player.Sprint.IsPressed()) // If there is movement input and sprint is not pressed...
         {
             currentState = CharacterState.Moving; // Switch to moving state
         }
-        else if (Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f && playerAction.Player.Sprint.IsPressed() && !inTiredCooldown) // If there is movement input but sprint is pressed...
+        else if (Mathf.Abs(rb.linearVelocity.magnitude) > 0.1f && playerAction.Player.Sprint.IsPressed() && !InTiredCooldown) // If there is movement input but sprint is pressed...
         {
             currentState = CharacterState.Sprinting; // Switch to sprinting state
         }
@@ -239,23 +238,23 @@ public class PlayerManager : MonoBehaviour
 
     void HandleMovingState()
     {
-        isMoving = true;
-        isDodging = false;
-        moveSpeed = playerStats.GetSpeed;
-        if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f && !isSprinting)
+        IsMoving = true;
+        IsDodging = false;
+        //moveSpeed = playerStats.GetSpeed;
+        if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f && !IsSprinting)
         {
-            isMoving = false;
+            IsMoving = false;
             rb.linearVelocity = Vector2.zero;
             currentState = CharacterState.Idle; // Switch to idle state
         }
-        else if (playerAction.Player.Sprint.IsPressed() && !inTiredCooldown)
+        else if (playerAction.Player.Sprint.IsInProgress() && !InTiredCooldown)
         {
-            isMoving = false;
+            IsMoving = false;
             currentState = CharacterState.Sprinting; // Switch to sprinting state
         }
-        else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && (playerStats.GetStamina > dodgeStaminaCost) && !inTiredCooldown)
+        else if (playerAction.Player.Dodge.IsPressed() && !InDodgeCooldown && (playerStats.GetStamina > dodgeStaminaCost) && !InTiredCooldown)
         {
-            isMoving = false;
+            IsMoving = false;
             playerStats.DodgeStamina(dodgeStaminaCost);
             currentState = CharacterState.Dodging; // Switch to dodging state
         }
@@ -263,46 +262,47 @@ public class PlayerManager : MonoBehaviour
 
     void HandleSprintingState()
     {
-        isSprinting = true;
-        isDodging = false;
-        if (!inTiredCooldown)
+        IsSprinting = true;
+        IsDodging = false;
+        if (!InTiredCooldown)
             moveSpeed = playerStats.GetSprintSpeed;
         else
             moveSpeed = tiredSpeed;
         playerStats.DrainStamina(staminaDrainSpeed);
         if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f)
         {
-            isSprinting = false;
+            IsSprinting = false;
             rb.linearVelocity = Vector2.zero;
             currentState = CharacterState.Idle; // Switch to idle state
         }
         else if (!playerAction.Player.Sprint.IsPressed())
         {
-            isSprinting = false;
+            IsSprinting = false;
+            moveSpeed = playerStats.GetSpeed;
             currentState = CharacterState.Moving; // Switch to moving state
         }
-        else if (playerAction.Player.Dodge.IsPressed() && !inDodgeCooldown && !inTiredCooldown && (playerStats.GetStamina > dodgeStaminaCost))
+        else if (playerAction.Player.Dodge.IsPressed() && !InDodgeCooldown && !InTiredCooldown && (playerStats.GetStamina > dodgeStaminaCost))
         {
-            isSprinting = false;
+            IsSprinting = false;
             playerStats.DodgeStamina(dodgeStaminaCost);
             currentState = CharacterState.Dodging; // Switch to dodging state
         }
         else if (playerStats.GetStamina <= 0.5f)
         {
-            isSprinting = false;
+            IsSprinting = false;
             tiredCooldownTime = tiredTempTime; // Reset tired cooldown timer
         }
     }
 
     IEnumerator HandleDodgingState(float dodgeTiming)
     {
-        isDodging = true;
-        playerSprite.color = Color.red;
-        GetComponent<Collider2D>().enabled = false;
+        IsDodging = true;
+        playerSprite.color = Color.green;
+        IsInvulnerable = true;
         yield return new WaitForSeconds(dodgeTiming);
         playerSprite.color = Color.blue;
-        GetComponent<Collider2D>().enabled = true;
-        isDodging = false;
+        IsInvulnerable = false;
+        IsDodging = false;
         if (Mathf.Abs(rb.linearVelocity.magnitude) < 0.1f) // If there is no movement...
         {
             rb.linearVelocity = Vector2.zero;
@@ -337,7 +337,7 @@ public class PlayerManager : MonoBehaviour
     void Backstep()
     {
         // Handles the force propulsion when backstepping
-        if (currentState == CharacterState.Idle && !inDodgeCooldown)
+        if (currentState == CharacterState.Idle && !InDodgeCooldown)
             rb.AddForce((-moveDirection * dodgeSpeed), ForceMode2D.Impulse);
         dodgeCooldownTime = dodgeTemp;
     }
@@ -357,7 +357,7 @@ public class PlayerManager : MonoBehaviour
     void Dodged(InputAction.CallbackContext context)
     {
         if (currentState != CharacterState.Idle)
-            isDodging = true;
+            IsDodging = true;
         else
             Backstep();
     }
@@ -365,7 +365,7 @@ public class PlayerManager : MonoBehaviour
     void Sprinted(InputAction.CallbackContext context)
     {
         if (playerStats.GetStamina > 0)
-            isSprinting = true;
+            IsSprinting = true;
     }
 
     void Interacted(InputAction.CallbackContext context)

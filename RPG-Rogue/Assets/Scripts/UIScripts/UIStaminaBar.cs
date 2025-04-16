@@ -17,7 +17,7 @@ public class UIStaminaBar : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (player.lowStamina)
+        if (player.LowStamina)
             fillImage.color = Color.yellow;
         else fillImage.color = origColor;
     }

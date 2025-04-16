@@ -260,7 +260,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e28c2cce8446d24c9239f5aa2a7354e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tiredCooldownTime: 3
 --- !u!61 &54162313
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -3241,7 +3240,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!212 &1557996493
 SpriteRenderer:
   m_ObjectHideFlags: 0
