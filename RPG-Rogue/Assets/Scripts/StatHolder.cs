@@ -4,6 +4,7 @@ public class StatHolder : MonoBehaviour
 {
     public Statistics stats;
 
+    bool canPlayerDie;
     int health;
     int maxHealth;
     int mana;
@@ -31,6 +32,7 @@ public class StatHolder : MonoBehaviour
         maxHealth = stats.health;
         maxMana = stats.mana;
         maxStamina = stats.stamina;
+        canPlayerDie = false;
     }
 
     void Update()
@@ -59,6 +61,11 @@ public class StatHolder : MonoBehaviour
     }
 
     #region Get/Set Methods
+    public bool GetPlayerDeathBool
+    {
+        get { return canPlayerDie; }
+        private set { canPlayerDie = value; }
+    }
     public int GetHealth
     {
         get { return health; }
@@ -141,7 +148,15 @@ public class StatHolder : MonoBehaviour
             int hitDamage = rawDamage - defense;
             health -= hitDamage;
             Debug.Log(this.gameObject.name + " has taken " + hitDamage.ToString() + " damage and has " + health.ToString() + " health left.");
+            if (health <= 0)
+            {
+                canPlayerDie = true;
+                Debug.Log(canPlayerDie);
+                return;
+            }
         }
+        else
+            canPlayerDie = true;
     }
 
     public void RecoverHealth(int recoverAmount)

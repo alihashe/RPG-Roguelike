@@ -2,25 +2,33 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-    GameObject player;
+    [SerializeField] GameObject target;
     Rigidbody2D rb; 
     StatHolder playerStats;
-    float defaultMoveSpeed;
     [SerializeField] float moveSpeed;
+    [SerializeField] int pDamage;
 
-    void Start()
+    void OnEnable()
     {
-        player = GameObject.FindWithTag("Player");
-        playerStats = player.GetComponent<StatHolder>();
+        target = GameObject.FindWithTag("Player");
+        playerStats = target.GetComponent<StatHolder>();
         rb = GetComponent<Rigidbody2D>();
-        moveSpeed = 5;
-        defaultMoveSpeed = moveSpeed;
-        RotateProjectile();
+
+        pDamage = 18;
+        moveSpeed = 11;
+        Invoke("MoveToTarget", 0.15f);
     }
 
-    void FixedUpdate ()
+    void OnDisable()
     {
-        MoveProjectile(moveSpeed);
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0;
+    }
+
+    void OnBecameInvisible()
+    {
+        rb.angularVelocity = 0;
+        gameObject.SetActive(false);
     }
 
     void OnTriggerEnter2D(Collider2D contact)
@@ -28,29 +36,23 @@ public class Projectile : MonoBehaviour
         if (contact.gameObject.tag == "Player") 
         {
             Debug.Log(this.name + " hit " + contact.gameObject.name);
-            DoDamage(15);
+            DoDamage(pDamage);
         }
-    }
-
-    void MoveProjectile(float projMoveSpeed)
-    {
-        rb.AddForce(transform.up * projMoveSpeed, ForceMode2D.Force);
-    }
-
-    void RotateProjectile()
-    {
-        rb.linearVelocity = Vector2.zero;
-
-        Vector2 pDirection = (player.transform.position - transform.position).normalized; // Direction to player
-
-        float pAngle = Mathf.Atan2(pDirection.y, pDirection.x) * Mathf.Rad2Deg - 90f; // From rads to degreees
-
-        rb.MoveRotation(pAngle); // Rotate towards player
     }
 
     void DoDamage(int damage)
     {
         playerStats.TakeDamage(damage);
         this.gameObject.SetActive(false);
+    }
+
+    void MoveToTarget()
+    {
+        Vector2 directionTarget = (target.transform.position - transform.position).normalized;
+
+        float pAngle = (Mathf.Atan2(directionTarget.y, directionTarget.x) * Mathf.Rad2Deg) - 90.0f;
+        transform.rotation = Quaternion.LookRotation(target.transform.position - transform.position, Vector3.up);
+
+        rb.AddForce(directionTarget * moveSpeed, ForceMode2D.Impulse);
     }
 }
